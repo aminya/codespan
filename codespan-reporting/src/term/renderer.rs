@@ -237,8 +237,9 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
         single_labels: &[SingleLabel<'_>],
         num_multi_labels: usize,
         multi_labels: &[(usize, LabelStyle, MultiLabel<'_>)],
-        char_styles: &Option<Vec<RangeStyle>>,
-    ) -> Result<(), Error> {
+        range_styles: &Option<Vec<RangeStyle>>,
+        mut previous_range_style_index: usize
+    ) -> Result<usize, Error> {
         // Trim trailing newlines, linefeeds, and null chars from source, if they exist.
         // FIXME: Use the number of trimmed placeholders when rendering single line carets
         let source = source.trim_end_matches(['\n', '\r', '\0'].as_ref());
@@ -311,10 +312,11 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
                     '\t' => (0..metrics.unicode_width).try_for_each(|_| write!(self, " "))?,
                     _ => {
                         // set range style
-                        if let Some(char_styles_values) = char_styles {
-                            for char_style in char_styles_values.iter() {
-                                if char_style.range.contains(&actual_column_range.start) {
-                                    self.set_color(&char_style.style)?;
+                        if let Some(range_styles_values) = range_styles {
+                            for (ind, range_style) in range_styles_values[previous_range_style_index..].iter().enumerate() {
+                                if range_style.range.contains(&actual_column_range.start) {
+                                    self.set_color(&range_style.style)?;
+                                    previous_range_style_index = ind + previous_range_style_index;
                                     break;
                                 }
                             }
@@ -611,7 +613,7 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
             }
         }
 
-        Ok(())
+        Ok(previous_range_style_index)
     }
 
     /// An empty source line, for providing additional whitespace to source snippets.

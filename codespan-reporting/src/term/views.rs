@@ -346,8 +346,9 @@ where
                 .filter(|(_, line)| line.must_render)
                 .peekable();
 
+            let mut previous_range_style_index: usize = 0;
             while let Some((line_index, line)) = lines.next() {
-                renderer.render_snippet_source(
+                previous_range_style_index = renderer.render_snippet_source(
                     outer_padding,
                     line.number,
                     &source[line.range.clone()],
@@ -357,6 +358,7 @@ where
                     labeled_file.num_multi_labels,
                     &line.multi_labels,
                     &self.config.range_styles,
+                    previous_range_style_index
                 )?;
 
                 // Check to see if we need to render any intermediate stuff
@@ -378,7 +380,7 @@ where
                                 .map_or(&[][..], |line| &line.multi_labels[..]);
 
                             let line_range = files.line_range(file_id, line_index + 1)?;
-                            renderer.render_snippet_source(
+                            previous_range_style_index = renderer.render_snippet_source(
                                 outer_padding,
                                 files.line_number(file_id, line_index + 1)?,
                                 &source[line_range.clone()],
@@ -388,6 +390,7 @@ where
                                 labeled_file.num_multi_labels,
                                 labels,
                                 &self.config.range_styles,
+                                previous_range_style_index
                             )?;
                         }
                         // More than one line between the current line and the next line.
