@@ -351,10 +351,12 @@ where
                     outer_padding,
                     line.number,
                     &source[line.range.clone()],
+                    line.range.clone(),
                     self.diagnostic.severity,
                     &line.single_labels,
                     labeled_file.num_multi_labels,
                     &line.multi_labels,
+                    &self.config.range_styles,
                 )?;
 
                 // Check to see if we need to render any intermediate stuff
@@ -375,14 +377,17 @@ where
                                 .get(&(line_index + 1))
                                 .map_or(&[][..], |line| &line.multi_labels[..]);
 
+                            let line_range = files.line_range(file_id, line_index + 1)?;
                             renderer.render_snippet_source(
                                 outer_padding,
                                 files.line_number(file_id, line_index + 1)?,
-                                &source[files.line_range(file_id, line_index + 1)?],
+                                &source[line_range.clone()],
+                                line_range,
                                 self.diagnostic.severity,
                                 &[],
                                 labeled_file.num_multi_labels,
                                 labels,
+                                &self.config.range_styles,
                             )?;
                         }
                         // More than one line between the current line and the next line.

@@ -6,6 +6,8 @@ use crate::diagnostic::{LabelStyle, Severity};
 use crate::files::{Error, Location};
 use crate::term::{Chars, Config, Styles};
 
+use super::config::RangeStyle;
+
 /// The 'location focus' of a source code snippet.
 pub struct Locus {
     /// The user-facing name of the file.
@@ -230,10 +232,12 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
         outer_padding: usize,
         line_number: usize,
         source: &str,
+        range: Range<usize>,
         severity: Severity,
         single_labels: &[SingleLabel<'_>],
         num_multi_labels: usize,
         multi_labels: &[(usize, LabelStyle, MultiLabel<'_>)],
+        char_styles: &Option<Vec<RangeStyle>>,
     ) -> Result<(), Error> {
         // Trim trailing newlines, linefeeds, and null chars from source, if they exist.
         // FIXME: Use the number of trimmed placeholders when rendering single line carets
@@ -274,8 +278,13 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
             // Write source text
             write!(self, " ")?;
             let mut in_primary = false;
+
             for (metrics, ch) in self.char_metrics(source.char_indices()) {
                 let column_range = metrics.byte_index..(metrics.byte_index + ch.len_utf8());
+                let actual_column_range = Range {
+                    start: range.start + column_range.start,
+                    end: range.start + column_range.end,
+                };
 
                 // Check if we are overlapping a primary label
                 let is_primary = single_labels.iter().any(|(ls, range, _)| {
@@ -300,7 +309,19 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
 
                 match ch {
                     '\t' => (0..metrics.unicode_width).try_for_each(|_| write!(self, " "))?,
-                    _ => write!(self, "{}", ch)?,
+                    _ => {
+                        // set range style
+                        if let Some(char_styles_values) = char_styles {
+                            for char_style in char_styles_values.iter() {
+                                if char_style.range.contains(&actual_column_range.start) {
+                                    self.set_color(&char_style.style)?;
+                                    break;
+                                }
+                            }
+                        }
+                        // print the character
+                        write!(self, "{}", ch)?;
+                    }
                 }
             }
             if in_primary {

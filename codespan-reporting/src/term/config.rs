@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use termcolor::{Color, ColorSpec};
 
 use crate::diagnostic::{LabelStyle, Severity};
@@ -37,6 +39,8 @@ pub struct Config {
     ///
     /// Defaults to: `0`.
     pub after_label_lines: usize,
+    /// An optional vector of `RangeStyle`, which specifies the style to use for a specific range in the source code
+    pub range_styles: Option<Vec<RangeStyle>>,
 }
 
 impl Default for Config {
@@ -50,6 +54,7 @@ impl Default for Config {
             end_context_lines: 1,
             before_label_lines: 0,
             after_label_lines: 0,
+            range_styles: None,
         }
     }
 }
@@ -328,4 +333,13 @@ impl Chars {
             pointer_left: '|',
         }
     }
+}
+
+/// Specifies the color specification for a given range.
+#[derive(Clone, Debug)]
+pub struct RangeStyle {
+    /// The bytes range of the character in the file
+    pub range: Range<usize>,
+    /// The color specification
+    pub style: ColorSpec,
 }
