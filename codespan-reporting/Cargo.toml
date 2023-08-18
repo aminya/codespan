@@ -13,7 +13,7 @@ edition = "2018"
 
 [dependencies]
 serde = { version = "1", optional = true, features = ["derive"] }
-termcolor = "1.0.4"
+termcolor = { git = "https://github.com/aminya/termcolor.git", rev = "552676f" }
 unicode-width = "0.1"
 
 [dev-dependencies]
@@ -26,5 +26,6 @@ structopt = "0.3"
 unindent = "0.1"
 
 [features]
-serialization = ["serde", "serde/rc"]
+default = ["serialization"]
+serialization = ["serde", "serde/rc", "termcolor/serde"]
 ascii-only = []
