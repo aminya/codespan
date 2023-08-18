@@ -39,8 +39,6 @@ pub struct Config {
     ///
     /// Defaults to: `0`.
     pub after_label_lines: usize,
-    /// An optional vector of `RangeStyle`, which specifies the style to use for a specific range in the source code
-    pub range_styles: Option<Vec<RangeStyle>>,
 }
 
 impl Default for Config {
@@ -54,7 +52,6 @@ impl Default for Config {
             end_context_lines: 1,
             before_label_lines: 0,
             after_label_lines: 0,
-            range_styles: None,
         }
     }
 }

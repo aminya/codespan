@@ -357,8 +357,8 @@ where
                     &line.single_labels,
                     labeled_file.num_multi_labels,
                     &line.multi_labels,
-                    &self.config.range_styles,
-                    previous_range_style_index
+                    files.range_styles(labeled_file.file_id),
+                    previous_range_style_index,
                 )?;
 
                 // Check to see if we need to render any intermediate stuff
@@ -389,8 +389,8 @@ where
                                 &[],
                                 labeled_file.num_multi_labels,
                                 labels,
-                                &self.config.range_styles,
-                                previous_range_style_index
+                                files.range_styles(labeled_file.file_id),
+                                previous_range_style_index,
                             )?;
                         }
                         // More than one line between the current line and the next line.

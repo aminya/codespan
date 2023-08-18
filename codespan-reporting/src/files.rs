@@ -25,6 +25,8 @@
 
 use std::ops::Range;
 
+use crate::term::RangeStyle;
+
 /// An enum representing an error that happened while looking up a file or a piece of content in that file.
 #[derive(Debug)]
 #[non_exhaustive]
@@ -164,6 +166,11 @@ pub trait Files<'a> {
 
     /// The byte range of line in the source of the file.
     fn line_range(&'a self, id: Self::FileId, line_index: usize) -> Result<Range<usize>, Error>;
+
+    /// An optional vector of `RangeStyle`, which specifies the style to use for a specific range in the source code
+    fn range_styles(&'a self, _id: Self::FileId) -> &Option<Vec<RangeStyle>> {
+        &None
+    }
 }
 
 /// A user-facing location in a source file.
