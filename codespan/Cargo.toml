@@ -15,7 +15,7 @@ codespan-reporting = { path = "../codespan-reporting", version = "0.11.1" }
 serde = { version = "1", optional = true, features = ["derive"]}
 
 [dev-dependencies]
-termcolor = { git = "https://github.com/aminya/termcolor.git", rev = "552676f" }
+termcolor = { git = "https://github.com/aminya/termcolor.git", rev = "f4f1be1" }
 
 [features]
 serialization = ["serde", "codespan-reporting/serialization"]

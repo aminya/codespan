@@ -13,7 +13,7 @@ edition = "2018"
 
 [dependencies]
 serde = { version = "1", optional = true, features = ["derive"] }
-termcolor = { git = "https://github.com/aminya/termcolor.git", rev = "552676f" }
+termcolor = { git = "https://github.com/aminya/termcolor.git", rev = "f4f1be1" }
 unicode-width = "0.1"
 
 [dev-dependencies]
