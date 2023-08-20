@@ -12,7 +12,7 @@ mod views;
 
 pub use termcolor;
 
-pub use self::config::{Chars, Config, DisplayStyle, RangeStyle, Styles};
+pub use self::config::{Chars, Config, DisplayStyle, Styles};
 
 /// A command line argument that configures the coloring of the output.
 ///

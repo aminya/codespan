@@ -1,7 +1,4 @@
-use std::ops::Range;
-
 #[cfg(feature = "serialization")]
-use serde::{Deserialize, Serialize};
 use termcolor::{Color, ColorSpec};
 
 use crate::diagnostic::{LabelStyle, Severity};
@@ -332,14 +329,4 @@ impl Chars {
             pointer_left: '|',
         }
     }
-}
-
-/// Specifies the color specification for a given range.
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serialization", derive(Deserialize, Serialize))]
-pub struct RangeStyle {
-    /// The bytes range of the character in the file
-    pub range: Range<usize>,
-    /// The color specification
-    pub style: ColorSpec,
 }

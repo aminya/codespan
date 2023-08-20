@@ -6,8 +6,6 @@ use crate::diagnostic::{LabelStyle, Severity};
 use crate::files::{Error, Location};
 use crate::term::{Chars, Config, Styles};
 
-use super::config::RangeStyle;
-
 /// The 'location focus' of a source code snippet.
 pub struct Locus {
     /// The user-facing name of the file.
@@ -237,9 +235,8 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
         single_labels: &[SingleLabel<'_>],
         num_multi_labels: usize,
         multi_labels: &[(usize, LabelStyle, MultiLabel<'_>)],
-        range_styles: &Option<Vec<RangeStyle>>,
-        mut previous_range_style_index: usize,
-    ) -> Result<usize, Error> {
+        mut style: impl FnMut(usize, &mut Renderer) -> Result<(), Error>,
+    ) -> Result<(), Error> {
         // Trim trailing newlines, linefeeds, and null chars from source, if they exist.
         // FIXME: Use the number of trimmed placeholders when rendering single line carets
         let source = source.trim_end_matches(['\n', '\r', '\0'].as_ref());
@@ -311,20 +308,9 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
                 match ch {
                     '\t' => (0..metrics.unicode_width).try_for_each(|_| write!(self, " "))?,
                     _ => {
-                        // set range style
-                        if let Some(range_styles_values) = range_styles {
-                            for (ind, range_style) in range_styles_values
-                                [previous_range_style_index..]
-                                .iter()
-                                .enumerate()
-                            {
-                                if range_style.range.contains(&actual_column_range.start) {
-                                    self.set_color(&range_style.style)?;
-                                    previous_range_style_index = ind + previous_range_style_index;
-                                    break;
-                                }
-                            }
-                        }
+                        // set the style for this char if needed
+                        style(actual_column_range.start, self)?;
+
                         // print the character
                         write!(self, "{}", ch)?;
                     }
@@ -616,8 +602,7 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
                 }
             }
         }
-
-        Ok(previous_range_style_index)
+        Ok(())
     }
 
     /// An empty source line, for providing additional whitespace to source snippets.

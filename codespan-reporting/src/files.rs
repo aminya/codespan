@@ -25,7 +25,7 @@
 
 use std::ops::Range;
 
-use crate::term::RangeStyle;
+use termcolor::WriteColor;
 
 /// An enum representing an error that happened while looking up a file or a piece of content in that file.
 #[derive(Debug)]
@@ -167,9 +167,14 @@ pub trait Files<'a> {
     /// The byte range of line in the source of the file.
     fn line_range(&'a self, id: Self::FileId, line_index: usize) -> Result<Range<usize>, Error>;
 
-    /// An optional vector of `RangeStyle`, which specifies the style to use for a specific range in the source code
-    fn range_styles(&'a self, _id: Self::FileId) -> &Option<Vec<RangeStyle>> {
-        &None
+    /// An Optional function for styling the rendered source code. The function is called for each byte in the source code, and the implementor can decide how to style the byte by calling the `WriteColor` methods on the `write_color` parameter.
+    fn style(
+        &'a self,
+        _id: Self::FileId,
+        _write_color: &mut impl WriteColor,
+        _byte_index: usize,
+    ) -> Result<(), Error> {
+        Ok(())
     }
 }
 

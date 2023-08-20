@@ -346,9 +346,10 @@ where
                 .filter(|(_, line)| line.must_render)
                 .peekable();
 
-            let mut previous_range_style_index: usize = 0;
             while let Some((line_index, line)) = lines.next() {
-                previous_range_style_index = renderer.render_snippet_source(
+                let labeled_file_file_id = labeled_file.file_id;
+
+                renderer.render_snippet_source(
                     outer_padding,
                     line.number,
                     &source[line.range.clone()],
@@ -357,8 +358,7 @@ where
                     &line.single_labels,
                     labeled_file.num_multi_labels,
                     &line.multi_labels,
-                    files.range_styles(labeled_file.file_id),
-                    previous_range_style_index,
+                    |byte_index, renderer| files.style(labeled_file_file_id, renderer, byte_index),
                 )?;
 
                 // Check to see if we need to render any intermediate stuff
@@ -380,7 +380,7 @@ where
                                 .map_or(&[][..], |line| &line.multi_labels[..]);
 
                             let line_range = files.line_range(file_id, line_index + 1)?;
-                            previous_range_style_index = renderer.render_snippet_source(
+                            renderer.render_snippet_source(
                                 outer_padding,
                                 files.line_number(file_id, line_index + 1)?,
                                 &source[line_range.clone()],
@@ -389,8 +389,9 @@ where
                                 &[],
                                 labeled_file.num_multi_labels,
                                 labels,
-                                files.range_styles(labeled_file.file_id),
-                                previous_range_style_index,
+                                |byte_index, renderer| {
+                                    files.style(labeled_file_file_id, renderer, byte_index)
+                                },
                             )?;
                         }
                         // More than one line between the current line and the next line.
