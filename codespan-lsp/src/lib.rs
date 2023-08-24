@@ -44,10 +44,10 @@ pub fn byte_index_to_position<'a, F>(
 where
     F: Files<'a> + ?Sized,
 {
-    let source = files.source(file_id)?;
+    let source = files.source(file_id.clone())?;
     let source = source.as_ref();
 
-    let line_index = files.line_index(file_id, byte_index)?;
+    let line_index = files.line_index(file_id.clone(), byte_index)?;
     let line_span = files.line_range(file_id, line_index).unwrap();
 
     let line_str = source
@@ -74,7 +74,7 @@ where
     F: Files<'a> + ?Sized,
 {
     Ok(LspRange {
-        start: byte_index_to_position(files, file_id, span.start)?,
+        start: byte_index_to_position(files, file_id.clone(), span.start)?,
         end: byte_index_to_position(files, file_id, span.end)?,
     })
 }
@@ -114,7 +114,7 @@ pub fn position_to_byte_index<'a, F>(
 where
     F: Files<'a> + ?Sized,
 {
-    let source = files.source(file_id)?;
+    let source = files.source(file_id.clone())?;
     let source = source.as_ref();
 
     let line_span = files.line_range(file_id, position.line as usize).unwrap();
@@ -133,8 +133,10 @@ pub fn range_to_byte_span<'a, F>(
 where
     F: Files<'a> + ?Sized,
 {
-    Ok(position_to_byte_index(files, file_id, &range.start)?
-        ..position_to_byte_index(files, file_id, &range.end)?)
+    Ok(
+        position_to_byte_index(files, file_id.clone(), &range.start)?
+            ..position_to_byte_index(files, file_id, &range.end)?,
+    )
 }
 
 #[cfg(test)]

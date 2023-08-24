@@ -87,7 +87,7 @@ impl std::error::Error for Error {
 pub trait Files<'a> {
     /// A unique identifier for files in the file provider. This will be used
     /// for rendering `diagnostic::Label`s in the corresponding source files.
-    type FileId: 'a + Copy + PartialEq;
+    type FileId: 'a + Clone + PartialEq;
     /// The user-facing name of a file, to be displayed in diagnostics.
     type Name: 'a + std::fmt::Display;
     /// The source code of a file.
@@ -146,7 +146,7 @@ pub trait Files<'a> {
         line_index: usize,
         byte_index: usize,
     ) -> Result<usize, Error> {
-        let source = self.source(id)?;
+        let source = self.source(id.clone())?;
         let line_range = self.line_range(id, line_index)?;
         let column_index = column_index(source.as_ref(), line_range, byte_index);
 
@@ -156,10 +156,10 @@ pub trait Files<'a> {
     /// Convenience method for returning line and column number at the given
     /// byte index in the file.
     fn location(&'a self, id: Self::FileId, byte_index: usize) -> Result<Location, Error> {
-        let line_index = self.line_index(id, byte_index)?;
+        let line_index = self.line_index(id.clone(), byte_index)?;
 
         Ok(Location {
-            line_number: self.line_number(id, line_index)?,
+            line_number: self.line_number(id.clone(), line_index)?,
             column_number: self.column_number(id, line_index, byte_index)?,
         })
     }

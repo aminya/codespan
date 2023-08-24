@@ -21,7 +21,7 @@ pub struct RichDiagnostic<'diagnostic, 'config, FileId> {
 
 impl<'diagnostic, 'config, FileId> RichDiagnostic<'diagnostic, 'config, FileId>
 where
-    FileId: Copy + PartialEq,
+    FileId: Clone + PartialEq,
 {
     pub fn new(
         diagnostic: &'diagnostic Diagnostic<FileId>,
@@ -85,12 +85,12 @@ where
 
         // Group labels by file
         for label in &self.diagnostic.labels {
-            let start_line_index = files.line_index(label.file_id, label.range.start)?;
-            let start_line_number = files.line_number(label.file_id, start_line_index)?;
-            let start_line_range = files.line_range(label.file_id, start_line_index)?;
-            let end_line_index = files.line_index(label.file_id, label.range.end)?;
-            let end_line_number = files.line_number(label.file_id, end_line_index)?;
-            let end_line_range = files.line_range(label.file_id, end_line_index)?;
+            let start_line_index = files.line_index(label.file_id.clone(), label.range.start)?;
+            let start_line_number = files.line_number(label.file_id.clone(), start_line_index)?;
+            let start_line_range = files.line_range(label.file_id.clone(), start_line_index)?;
+            let end_line_index = files.line_index(label.file_id.clone(), label.range.end)?;
+            let end_line_number = files.line_number(label.file_id.clone(), end_line_index)?;
+            let end_line_range = files.line_range(label.file_id.clone(), end_line_index)?;
 
             outer_padding = std::cmp::max(outer_padding, count_digits(start_line_number));
             outer_padding = std::cmp::max(outer_padding, count_digits(end_line_number));
@@ -110,7 +110,8 @@ where
                     {
                         // this label has a higher style or has the same style but starts earlier
                         labeled_file.start = label.range.start;
-                        labeled_file.location = files.location(label.file_id, label.range.start)?;
+                        labeled_file.location =
+                            files.location(label.file_id.clone(), label.range.start)?;
                         labeled_file.max_label_style = label.style;
                     }
                     labeled_file
@@ -118,10 +119,10 @@ where
                 None => {
                     // no other diagnostic referenced this file yet
                     labeled_files.push(LabeledFile {
-                        file_id: label.file_id,
+                        file_id: label.file_id.clone(),
                         start: label.range.start,
-                        name: files.name(label.file_id)?.to_string(),
-                        location: files.location(label.file_id, label.range.start)?,
+                        name: files.name(label.file_id.clone())?.to_string(),
+                        location: files.location(label.file_id.clone(), label.range.start)?,
                         num_multi_labels: 0,
                         lines: BTreeMap::new(),
                         max_label_style: label.style,
@@ -145,7 +146,7 @@ where
                     break;
                 };
 
-                if let Ok(range) = files.line_range(label.file_id, index) {
+                if let Ok(range) = files.line_range(label.file_id.clone(), index) {
                     let line =
                         labeled_file.get_or_insert_line(index, range, start_line_number - offset);
                     line.must_render = true;
@@ -161,7 +162,7 @@ where
                     .checked_add(offset)
                     .expect("line index too big");
 
-                if let Ok(range) = files.line_range(label.file_id, index) {
+                if let Ok(range) = files.line_range(label.file_id.clone(), index) {
                     let line =
                         labeled_file.get_or_insert_line(index, range, end_line_number + offset);
                     line.must_render = true;
@@ -249,8 +250,8 @@ where
                 // 7 │ │     _ 0 => "Buzz"
                 // ```
                 for line_index in (start_line_index + 1)..end_line_index {
-                    let line_range = files.line_range(label.file_id, line_index)?;
-                    let line_number = files.line_number(label.file_id, line_index)?;
+                    let line_range = files.line_range(label.file_id.clone(), line_index)?;
+                    let line_number = files.line_number(label.file_id.clone(), line_index)?;
 
                     outer_padding = std::cmp::max(outer_padding, count_digits(line_number));
 
@@ -316,7 +317,7 @@ where
         // ```
         let mut labeled_files = labeled_files.into_iter().peekable();
         while let Some(labeled_file) = labeled_files.next() {
-            let source = files.source(labeled_file.file_id)?;
+            let source = files.source(labeled_file.file_id.clone())?;
             let source = source.as_ref();
 
             // Top left border and locus.
@@ -347,7 +348,7 @@ where
                 .peekable();
 
             while let Some((line_index, line)) = lines.next() {
-                let labeled_file_file_id = labeled_file.file_id;
+                let labeled_file_file_id = labeled_file.file_id.clone();
 
                 renderer.render_snippet_source(
                     outer_padding,
@@ -358,7 +359,9 @@ where
                     &line.single_labels,
                     labeled_file.num_multi_labels,
                     &line.multi_labels,
-                    |byte_index, renderer| files.style(labeled_file_file_id, renderer, byte_index),
+                    |byte_index, renderer| {
+                        files.style(labeled_file_file_id.clone(), renderer, byte_index)
+                    },
                 )?;
 
                 // Check to see if we need to render any intermediate stuff
@@ -370,7 +373,7 @@ where
                         // One line between the current line and the next line
                         Some(2) => {
                             // Write a source line
-                            let file_id = labeled_file.file_id;
+                            let file_id = labeled_file.file_id.clone();
 
                             // This line was not intended to be rendered initially.
                             // To render the line right, we have to get back the original labels.
@@ -379,7 +382,7 @@ where
                                 .get(&(line_index + 1))
                                 .map_or(&[][..], |line| &line.multi_labels[..]);
 
-                            let line_range = files.line_range(file_id, line_index + 1)?;
+                            let line_range = files.line_range(file_id.clone(), line_index + 1)?;
                             renderer.render_snippet_source(
                                 outer_padding,
                                 files.line_number(file_id, line_index + 1)?,
@@ -390,7 +393,7 @@ where
                                 labeled_file.num_multi_labels,
                                 labels,
                                 |byte_index, renderer| {
-                                    files.style(labeled_file_file_id, renderer, byte_index)
+                                    files.style(labeled_file_file_id.clone(), renderer, byte_index)
                                 },
                             )?;
                         }
@@ -450,7 +453,7 @@ pub struct ShortDiagnostic<'diagnostic, FileId> {
 
 impl<'diagnostic, FileId> ShortDiagnostic<'diagnostic, FileId>
 where
-    FileId: Copy + PartialEq,
+    FileId: Clone + PartialEq,
 {
     pub fn new(
         diagnostic: &'diagnostic Diagnostic<FileId>,
@@ -482,8 +485,8 @@ where
 
             renderer.render_header(
                 Some(&Locus {
-                    name: files.name(label.file_id)?.to_string(),
-                    location: files.location(label.file_id, label.range.start)?,
+                    name: files.name(label.file_id.clone())?.to_string(),
+                    location: files.location(label.file_id.clone(), label.range.start)?,
                 }),
                 self.diagnostic.severity,
                 self.diagnostic.code.as_deref(),
