@@ -85,6 +85,8 @@ where
 
         // Group labels by file
         for label in &self.diagnostic.labels {
+            files.on_label(label.file_id.clone(), &label.range);
+
             let start_line_index = files.line_index(label.file_id.clone(), label.range.start)?;
             let start_line_number = files.line_number(label.file_id.clone(), start_line_index)?;
             let start_line_range = files.line_range(label.file_id.clone(), start_line_index)?;

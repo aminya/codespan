@@ -167,6 +167,9 @@ pub trait Files<'a> {
     /// The byte range of line in the source of the file.
     fn line_range(&'a self, id: Self::FileId, line_index: usize) -> Result<Range<usize>, Error>;
 
+    /// This method is called before rendering the given range in the given file for a label.
+    fn on_label(&'a self, _id: Self::FileId, _range: &Range<usize>) {}
+
     /// An Optional function for styling the rendered source code. The function is called for each byte in the source code, and the implementor can decide how to style the byte by calling the `Styleable` methods on the `_styleable` parameter.
     fn style(
         &'a self,
