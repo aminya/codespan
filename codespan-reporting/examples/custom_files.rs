@@ -99,7 +99,7 @@ mod files {
 
             let file_id = FileId(u32::try_from(self.files.len()).ok()?);
             let name = name.into();
-            let source = source.into();
+            let source: String = source.into();
             let line_starts = files::line_starts(&source).collect();
 
             self.files.push(File {

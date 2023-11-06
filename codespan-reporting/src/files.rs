@@ -23,9 +23,9 @@
 //!
 //! [`salsa`]: https://crates.io/crates/salsa
 
-use std::ops::Range;
+use std::{io, ops::Range};
 
-use termcolor::WriteColor;
+use termcolor::{ColorSpec, WriteColor};
 
 /// An enum representing an error that happened while looking up a file or a piece of content in that file.
 #[derive(Debug)]
@@ -167,11 +167,11 @@ pub trait Files<'a> {
     /// The byte range of line in the source of the file.
     fn line_range(&'a self, id: Self::FileId, line_index: usize) -> Result<Range<usize>, Error>;
 
-    /// An Optional function for styling the rendered source code. The function is called for each byte in the source code, and the implementor can decide how to style the byte by calling the `WriteColor` methods on the `write_color` parameter.
+    /// An Optional function for styling the rendered source code. The function is called for each byte in the source code, and the implementor can decide how to style the byte by calling the `Styleable` methods on the `_styleable` parameter.
     fn style(
         &'a self,
         _id: Self::FileId,
-        _write_color: &mut impl WriteColor,
+        _styleable: &mut impl Styleable,
         _byte_index: usize,
     ) -> Result<(), Error> {
         Ok(())
@@ -262,6 +262,41 @@ pub fn column_index(source: &str, line_range: Range<usize>, byte_index: usize) -
 // NOTE: this is copied in `codespan::file::line_starts` and should be kept in sync.
 pub fn line_starts(source: &str) -> impl '_ + Iterator<Item = usize> {
     std::iter::once(0).chain(source.match_indices('\n').map(|(i, _)| i + 1))
+}
+
+/// The methods that can be used to style the rendered source code.
+pub trait Styleable {
+    /// Returns true if and only if the underlying writer supports colors.
+    fn supports_color(&self) -> bool;
+
+    /// Set the color settings of the writer.
+    ///
+    /// Subsequent writes to this writer will use these settings until either
+    /// `reset` is called or new color settings are set.
+    ///
+    /// If there was a problem setting the color settings, then an error is
+    /// returned.
+    fn set_color(&mut self, spec: &ColorSpec) -> io::Result<()>;
+
+    /// Reset the current color settings to their original settings.
+    ///
+    /// If there was a problem resetting the color settings, then an error is
+    /// returned.
+    fn reset(&mut self) -> io::Result<()>;
+}
+
+impl<T: WriteColor> Styleable for T {
+    fn supports_color(&self) -> bool {
+        WriteColor::supports_color(self)
+    }
+
+    fn set_color(&mut self, spec: &ColorSpec) -> io::Result<()> {
+        WriteColor::set_color(self, spec)
+    }
+
+    fn reset(&mut self) -> io::Result<()> {
+        WriteColor::reset(self)
+    }
 }
 
 /// A file database that contains a single source file.
