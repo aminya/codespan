@@ -142,16 +142,6 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
         code: Option<&str>,
         message: &str,
     ) -> Result<(), Error> {
-        // Write locus
-        //
-        // ```text
-        // test:2:9:
-        // ```
-        if let Some(locus) = locus {
-            self.snippet_locus(locus)?;
-            write!(self, ": ")?;
-        }
-
         // Write severity name
         //
         // ```text
@@ -183,6 +173,16 @@ impl<'writer, 'config> Renderer<'writer, 'config> {
         self.set_color(&self.styles().header_message)?;
         write!(self, ": {}", message)?;
         self.reset()?;
+
+        // Write locus
+        //
+        // ```text
+        // test:2:9:
+        // ```
+        if let Some(locus) = locus {
+            self.snippet_locus(locus)?;
+            write!(self, ": ")?;
+        }
 
         writeln!(self)?;
 
